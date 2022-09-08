@@ -3,3 +3,6 @@ pandas
 wheel
 ipykernel
 pyspark
+geopandas
+folium
+seaborn

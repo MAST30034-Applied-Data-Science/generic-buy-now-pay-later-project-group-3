@@ -131,6 +131,11 @@ dmypy.json
 # data
 data/curated/
 data/raw/
+data/tables/
+data/curated/
+
+# plots
+plots/general_sa2_visuals.html
 
 # OSX .DS_Store file
 .DS_Store
