@@ -1,13 +1,27 @@
-'''This module contains the functions to download the external data.'''
-from utils import createTaregetDir 
-def download_external(raw_dir):
-    '''This function downloads all the external datasets(if there is any)'''
+import os
+from zipfile import ZipFile
+from urllib.request import urlretrieve
 
-    download_process = True
-    if (download_process):
-        print("external dataset downloading finished")
-        return True
-    else:
-        return False
+class Download():
+    """
+    Call all download functions and delete variables when done
+    """
+
+    def __init__(self) -> None:
+        print("Download started")
+        
+    def __del__(self):
+        print("Download Completed!")
+
+    def download_external(self):
+        """
+        Function to download all the external datasets
+        """
+        self.download_tax()
     
+    def download_tax(self):
+        """
+        Function to download tax/income data from ABS SA2 website
+        """
+        pass
 
