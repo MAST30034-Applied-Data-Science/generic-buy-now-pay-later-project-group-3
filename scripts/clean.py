@@ -21,6 +21,6 @@ class Clean():
         print("Clean Up Completed!")
 
     def clean_tax_income(self):
-        # Update to include tax income data
+        # Update to include tax income data (EXAMPLE ONLY)
         tax_income = u.read_tables(self.sp, "tax_income", "c")
         pass
