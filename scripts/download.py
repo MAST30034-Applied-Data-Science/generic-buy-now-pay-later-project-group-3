@@ -18,6 +18,10 @@ class Download():
         Function to download all the external datasets
         """
         self.download_tax()
+<<<<<<< HEAD
+=======
+        # self.download_postcodes()
+>>>>>>> download
     
     def download_tax(self):
         """
