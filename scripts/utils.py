@@ -58,6 +58,17 @@ def read_curated(sp:SparkSession, fname: str):
     dir = "../data/curated/" + fname
     return sp.read.option("inferSchema", True).parquet(dir)
 
+def read_processed(sp: SparkSession, fname: str):
+    """
+    Function to read data from the curated folder
+
+    sp : Current sparkSession
+    fname : Name of file to be read
+    """
+    # Root directory
+    dir = "../data/processed/" + fname
+    return sp.read.option("inferSchema", True).parquet(dir)
+
 def write_data(data: DataFrame, folder: str, fname: str):
     """
     Function to write spark data into the specified folder

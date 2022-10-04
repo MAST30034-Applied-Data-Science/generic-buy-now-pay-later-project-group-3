@@ -22,6 +22,7 @@ class Process():
         # Variables
         self.transactions = u.read_curated(self.sp, "transactions")
         self.merchants = u.read_tables(self.sp, "tbl_merchants", "p")
+        # self.merchants = u.read_processed(self.sp, "merchants")
         self.customers = u.read_tables(self.sp, "tbl_consumer", "c")
 
     def __del__(self):
@@ -42,18 +43,27 @@ class Process():
         """
         Call all functions with regards to merchants
         """
-        print("In merchant transformation function")
-        self.merchants.show(3)
 
-        # Get unregistered column counts
+        # Get unregistered column counts (UNCOMMENT - Takes a min to run)
         unregistered = self.unregistered_customers(self.merchants, self.customers, self.transactions)
         self.merchants = self.create_columns(unregistered, self.merchants)
         self.merchants = self.create_cust_growth_column(self.merchants, self.transactions)
 
-        print("After Mechant processing")
-        self.merchants.show(3)
+        # TO CALL in the last, after everything has been processed
+        self.model_data()
 
-    def unregistered_customers(self, merchants, customers, transactions):
+    def model_data(self):
+        """
+        Function to deal with a subset of data that is required for the Machine Learning model
+
+        TODO: Reduce fraud probability data and postcode data to finalize model data
+        """
+        cleaned_transactions = self.remove_unreg_merchants(self.transactions, self.merchants)
+        model_transactions = self.remove_unreg_cust(cleaned_transactions, self.customers)
+
+        u.write_data(model_transactions, "processed", "model_data")
+
+    def unregistered_customers(self, merchants: DataFrame, customers: DataFrame, transactions: DataFrame):
         '''
         Args:
             merchants (pyspark.sql.DataFrame)    : Df with details about all the  merchants, including their 'merchant_abn'
@@ -80,7 +90,7 @@ class Process():
         # transactions with registered merchant ABNs but unknown customer IDs
         return reg_merchant_trans[reg_merchant_trans.user_id.isin(unknown_cust_list)]
 
-    def create_columns(self, unknown_cust_trans, merchants):
+    def create_columns(self, unknown_cust_trans: DataFrame, merchants: DataFrame):
         '''
         Args:
             unknown_cust_trans (pyspark.sql.DataFrame) : Df with all the transactions that have a registered Merchant ABN but an unknown user/customer ID.
@@ -163,3 +173,23 @@ class Process():
         growth = pd.DataFrame.from_dict({"merchant_abn": abns, "avg_monthly_inc": incs})
         return self.sp.createDataFrame(growth)
 
+    def remove_unreg_merchants(self, trans, merch):
+        """
+        Function to remove transactions from unregistered merchants
+        """
+        abn_list = merch.rdd.map(lambda x: x.merchant_abn).collect()
+
+        # transactions with registered merchant ABNs
+        return trans[trans.merchant_abn.isin(abn_list)]
+
+    def remove_unreg_cust(self, trans, cust):
+        """
+        Function to remove transactions from unregistered customers
+        """
+        # list of registered customer IDs
+        unknown_cust = (trans.select('user_id').distinct()) \
+                        .subtract(cust.select(col('consumer_id')))
+        unknown_cust_list = unknown_cust.rdd.map(lambda x: x.user_id).collect()
+
+        # transactions with registered customer IDs
+        return trans[trans.user_id.isin(unknown_cust_list) == False]
