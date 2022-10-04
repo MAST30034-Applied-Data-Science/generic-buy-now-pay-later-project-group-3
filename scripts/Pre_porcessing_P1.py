@@ -43,25 +43,28 @@ def tax_add(dataset):
 # This function joins an external dataset to the cunstomer details, in particular adding regions/electorates... 
 # Based on postcode
 def postcode_add(dataset, spark):
-    postcodes = pd.read_csv("../data/tables/australian_postcodes.csv")
+    # load data 
     cust = dataset.toPandas()
-    postcodes = postcodes[['postcode', 'state', 'sa3name', 'sa4name', 'SA3_NAME_2016', 'electoraterating', 'electorate']]
+    postcodes = pd.read_csv("../data/tables/australian_postcodes.csv")
+    postcodes['postcode'] = postcodes['postcode'].astype('str')
+    keep_columns = ['postcode', 'state', 'sa3name', 'sa4name', 'SA3_NAME_2016', 'electoraterating', 'electorate']
+    postcodes = postcodes[keep_columns]
     # First imputate missing values
     for col in postcodes.columns[1:]:
         postcodes[col] = postcodes.groupby("state")[col].transform(lambda x: x.fillna(x.mode()))
     postcodes_agg = postcodes.groupby(['state', 'postcode'], as_index=False).agg(sa3name = pd.NamedAgg('sa3name',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN),
-                                                 sa4name = pd.NamedAgg('sa4name',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN),
-                                                 electoraterating = pd.NamedAgg('electoraterating',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN),
-                                                 SA3_NAME_2016 = pd.NamedAgg('SA3_NAME_2016',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN),
-                                                 electorate = pd.NamedAgg('electorate',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN)
-                                                 )
-                                                 # Imputate
+                                                    sa4name = pd.NamedAgg('sa4name',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN),
+                                                    electoraterating = pd.NamedAgg('electoraterating',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN),
+                                                    SA3_NAME_2016 = pd.NamedAgg('SA3_NAME_2016',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN),
+                                                    electorate = pd.NamedAgg('electorate',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN)
+                                                    )
+    # Imputate
     imputation = postcodes_agg.groupby('state', as_index=False).agg(sa3name_mode = pd.NamedAgg('sa3name',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN),
-                                                 sa4name_mode = pd.NamedAgg('sa4name',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN),
-                                                 electoraterating_mode = pd.NamedAgg('electoraterating',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN),
-                                                 SA3_NAME_2016_mode = pd.NamedAgg('SA3_NAME_2016',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN),
-                                                 electorate_mode = pd.NamedAgg('electorate',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN)
-                                                 )
+                                                    sa4name_mode = pd.NamedAgg('sa4name',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN),
+                                                    electoraterating_mode = pd.NamedAgg('electoraterating',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN),
+                                                    SA3_NAME_2016_mode = pd.NamedAgg('SA3_NAME_2016',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN),
+                                                    electorate_mode = pd.NamedAgg('electorate',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN)
+                                                    )
     postcodes_agg = postcodes_agg.merge(imputation, on='state', how='left')
     postcodes_agg.sa3name.fillna(postcodes_agg.sa3name_mode, inplace=True)
     postcodes_agg.sa4name.fillna(postcodes_agg.sa4name_mode, inplace=True)
@@ -69,23 +72,27 @@ def postcode_add(dataset, spark):
     postcodes_agg.SA3_NAME_2016.fillna(postcodes_agg.SA3_NAME_2016_mode, inplace=True)
     postcodes_agg.electorate.fillna(postcodes_agg.electorate_mode, inplace=True)
     postcodes_agg = postcodes_agg.drop(['sa3name_mode', 'sa4name_mode', 'electoraterating_mode', 'SA3_NAME_2016_mode', 'electorate_mode'], axis = 1)
-    # now add the tax information to each 
-    postcodes_agg, tax_columns = tax_add(postcodes_agg) 
+    tax_data = pd.read_csv("../data/tables/tax_income.csv")
+    tax_data['Postcode'] = tax_data['Postcode'].astype('str')
+    # First remove duplicate columns 
+    tax_data = tax_data.T.drop_duplicates().T
+    tax_columns = tax_data.columns[1:]
+    # IMPUTATION TIME
+    postcodes_agg = postcodes_agg.join(tax_data, lsuffix='postcode', rsuffix='Postcode', how='left')
+    for col in tax_columns:
+        for agg_name in ['sa4name', 'electorate', 'electoraterating']:
+            postcodes_agg[col] = postcodes_agg.groupby(agg_name)[col].transform(lambda x: x.fillna(x.mean()))
+        postcodes_agg[col] = postcodes_agg[col].apply(np.ceil).astype('int')
     postcodes_agg.set_index(['state', 'postcode'], inplace = True)
     cust.set_index(['state', 'postcode'], inplace= True)
     customer_tbl = cust.join(postcodes_agg, how='left')
     customer_tbl = customer_tbl.reset_index()
     customer_tbl.drop(columns='Postcode', inplace = True)
-    # create schema
-    structure = []
-    for att_name in customer_tbl.columns:
-            if att_name not in tax_columns:
-                    structure.append(StructField(att_name, StringType(), True))
-            else: 
-                    structure.append(StructField(att_name, IntegerType(), True))
-    schema = StructType(structure)
+    # set some types 
+    customer_tbl['SA3_NAME_2016'] = customer_tbl['SA3_NAME_2016'].astype('str')
+    customer_tbl['sa3name'] = customer_tbl['sa3name'].astype('str')
     # convert back to original form
-    customer_tbl = spark.createDataFrame(customer_tbl, schema)
+    customer_tbl = spark.createDataFrame(customer_tbl)
     return customer_tbl
 
 # this function standardises the tags attribute, creating a list with the 'description', 'revenue band' and 'BNPL service charge'
@@ -136,7 +143,7 @@ def full_dataset_refine(full_dataset):
     # now we can round each dollar value to the nearest cent (not 5 cents, as there exists unusual pricing in the real world)
     full_dataset = full_dataset.withColumn("dollar_value", F.round(F.col("dollar_value"), 2))
     # now we can also add the bnpl revenue from a transaction 
-    full_dataset = full_dataset.withColumn('BNPL_Revenue', F.col('dollar_value') * 0.01 * F.col('BNPL_Fee'))
+    full_dataset = full_dataset.withColumn('BNPL_Revenue', F.round(F.col('dollar_value') * 0.01 * F.col('BNPL_Fee'), 2))
     return full_dataset
 
 # This opens the spark session 
@@ -199,6 +206,8 @@ def main():
     customer_tbl = spark.read.option("delimiter", "|").option("header",True).csv(os.path.join(data_dir,'tbl_consumer.csv'))
     # Process the merchants
     merchants = merchant_process(merchants_tbl, spark)
+    # process the customers 
+    customer_tbl = postcode_add(customer_tbl, spark)
     # Join the datasets
     customer_tbl = customer_tbl.join(consumer_details, ['consumer_id'])
     full_dataset = transactions.join(customer_tbl, ['user_id'])
