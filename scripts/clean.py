@@ -24,3 +24,9 @@ class Clean():
         # Update to include tax income data (EXAMPLE ONLY)
         tax_income = u.read_tables(self.sp, "tax_income", "c")
         pass
+
+    def dollar_value(self):
+        """
+        Function to clean dollar values and remove the noise associated with the data
+        """
+        
