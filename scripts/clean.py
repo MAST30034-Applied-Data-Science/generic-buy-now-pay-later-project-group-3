@@ -33,6 +33,7 @@ class Clean():
         self.dollar_value()
         self.drop_cols()
         self.convert_data()
+        self.change_column()
 
         # Write final data into curated folder
         self.write_all()
@@ -73,8 +74,7 @@ class Clean():
         """
         consumer = u.read_tables(self.sp, "tbl_consumer")
         lookup = u.read_tables(self.sp, "consumer_user_details", "p")
-
-        consumer.join(lookup, on="consumer_id").write.parquet("../data/curated/consumer_details")
+        u.write_data(consumer.join(lookup, on="consumer_id").drop("consumer_id"), "curated", "consumer_details")
 
     def write_all(self):
         """

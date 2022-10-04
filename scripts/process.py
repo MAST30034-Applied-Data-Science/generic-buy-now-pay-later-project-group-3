@@ -21,8 +21,7 @@ class Process():
         # Variables
         self.transactions = u.read_curated(self.sp, "transactions")
         self.merchants = u.read_tables(self.sp, "tbl_merchants", "p")
-        # self.merchants = u.read_processed(self.sp, "merchants")
-        self.customers = u.read_tables(self.sp, "tbl_consumer", "c")
+        self.customers = u.read_curated(self.sp, "consumer_details")
 
     def __del__(self):
         self.sp.stop
@@ -33,8 +32,8 @@ class Process():
         Main function to call all the processing steps and methods
         """
         # MERCHANTS
-        # self.merchant_transform()
-        # u.write_data(self.merchants, "processed", "merchants")
+        self.merchant_transform()
+        u.write_data(self.merchants, "processed", "merchants")
 
         # TRANSACTIONS
         self.transaction_transform()
@@ -59,7 +58,7 @@ class Process():
         Merge holiday data with transactions
         """
         holiday = self.sp.read.option("inferSchema", True).parquet("../data/tables/holiday")
-        return self.transactions.join(holiday, holiday.date == self.transactions.order_datetime, how="left")
+        return self.transactions.join(holiday, holiday.date == self.transactions.order_datetime, how="left").drop("date")
 
     def create_cust_growth_column(self, merchants, transactions):
         '''
@@ -145,15 +144,15 @@ class Process():
 
         # after noticing that some merchants only have one transaction value (i.e one dollar_value amount for all transactios)
         # decided to removed due to unrealisic distributed data 
-        Outlier_tags = Outlier_tags.withColumn('Natural_var', when((col('Upper_limit') == col('Lower_limit')) & (col('Count') > 10), True).otherwise(False))
+        Outlier_tags = Outlier_tags.withColumn('Natural_var', when((col('Upper_limit') == col('Lower_limit')) & (col('Count') > 10), 1).otherwise(0))
         Outlier_tags = Outlier_tags.select('merchant_abn', 'Upper_limit', 'Lower_limit', 'Natural_var')
         
         # Now all we need to do is join this data to each transaction, then can select the transactios which are (not) within the limits
         Outlier_tags = full_dataset.select('merchant_abn', 'order_id', 'user_id', 'dollar_value').join(Outlier_tags, on= ['merchant_abn'])
         
         # finally identify the outliers which fall out of distribution or apart of a dodgy business
-        Outlier_tags = Outlier_tags.withColumn('Potential_Outlier', when((Outlier_tags.dollar_value <= col('Upper_limit')) & (Outlier_tags.dollar_value >= col('Lower_limit')) & (col('Natural_var') == False), False)
-                                                    .otherwise(True))
+        Outlier_tags = Outlier_tags.withColumn('Potential_Outlier', when((Outlier_tags.dollar_value <= col('Upper_limit')) & (Outlier_tags.dollar_value >= col('Lower_limit')) & (col('Natural_var') == 0), 0)
+                                                    .otherwise(1))
         # Join the new attributes obtained above to the transaction spark dataframe
         Outlier_tags = Outlier_tags.select(['order_id', 'Natural_var', 'Potential_Outlier'])
         full_dataset = full_dataset.join(Outlier_tags, on='order_id')
