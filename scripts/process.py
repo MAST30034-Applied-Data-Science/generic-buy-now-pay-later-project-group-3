@@ -1,11 +1,10 @@
 import os
 import pandas as pd
-from functools import reduce
 
 import utils as u
 
 from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.functions import col, countDistinct, date_format
+from pyspark.sql.functions import col, countDistinct, date_format, expr, count, when
 
 class Process():
     """
@@ -33,24 +32,34 @@ class Process():
         """
         Main function to call all the processing steps and methods
         """
-        # List all the functions to process in order
-        self.merchant_transform()
+        # MERCHANTS
+        # self.merchant_transform()
+        # u.write_data(self.merchants, "processed", "merchants")
 
-        # Output code to specified folder
-        u.write_data(self.merchants, "processed", "merchants")
+        # TRANSACTIONS
+        self.transaction_transform()
+        u.write_data(self.transactions, "processed", "transactions")
+
+        # MODEL DATA
+        # self.model_data()
+
 
     def merchant_transform(self):
         """
         Call all functions with regards to merchants
         """
-
         # Get unregistered column counts (UNCOMMENT - Takes a min to run)
         unregistered = self.unregistered_customers(self.merchants, self.customers, self.transactions)
         self.merchants = self.create_columns(unregistered, self.merchants)
         self.merchants = self.create_cust_growth_column(self.merchants, self.transactions)
 
-        # TO CALL in the last, after everything has been processed
-        self.model_data()
+
+    def transaction_transform(self):
+        """
+        Call all functions with regard to transactions
+        """
+        self.transactions = self.potential_outlier(self.transactions)
+        
 
     def model_data(self):
         """
@@ -193,3 +202,40 @@ class Process():
 
         # transactions with registered customer IDs
         return trans[trans.user_id.isin(unknown_cust_list) == False]
+
+    # Description for the function is below
+    def potential_outlier(self, full_dataset):
+        '''
+        # Outlier detection algorithm
+
+        This will be inplemented by creating an attribute called 'potential outlier'. which marks dollar 
+        values of transactios that fall out of a companies specific SIQR as True, and False otherwise. 
+        Furthermore, it marks all transactions that belong to a company, which has no variance 
+        in the dollar value of respective transactios. This is due to it being unrealistic/dodgy.
+        
+        Note: after further investigating the 'dodgy' transactions, consistent dollar values for all merchant's 
+        should be reconsidered, as some fall under the 'tv subscription' description, which should be consistent
+        anyway
+        '''
+        Fst_percentile = expr('percentile_approx(dollar_value, 0.25)')
+        Trd_percentile = expr('percentile_approx(dollar_value, 0.75)')
+        Second_percentile = expr('percentile_approx(dollar_value, 0.5)')
+        Outlier_tags = full_dataset.groupBy('merchant_abn').agg(Fst_percentile.alias('1_val'), Trd_percentile.alias('3_val'), Second_percentile.alias('2_val'), count('dollar_value').alias('Count'))
+        Outlier_tags = Outlier_tags.withColumn('SIQR_Lower', col('2_val') - col('1_val'))
+        Outlier_tags = Outlier_tags.withColumn('SIQR_Upper', col('3_val') - col('2_val'))
+        # Now calculate the limits
+        Outlier_tags = Outlier_tags.withColumn('Upper_limit', col('3_val') + 3 * col('SIQR_Upper'))
+        Outlier_tags = Outlier_tags.withColumn('Lower_limit', col('1_val') - 3 * col('SIQR_Lower'))
+        # after noticing that some merchants only have one transaction value (i.e one dollar_value amount for all transactios)
+        # decided to removed due to unrealisic distributed data 
+        Outlier_tags = Outlier_tags.withColumn('Natural_var', when((col('Upper_limit') == col('Lower_limit')) & (col('Count') > 10), True).otherwise(False))
+        Outlier_tags = Outlier_tags.select('merchant_abn', 'Upper_limit', 'Lower_limit', 'Natural_var')
+        # Now all we need to do is join this data to each transaction, then can select the transactios which are (not) within the limits
+        Outlier_tags = full_dataset.select('merchant_abn', 'order_id', 'user_id', 'dollar_value').join(Outlier_tags, on= ['merchant_abn'])
+        # finally identify the outliers which fall out of distribution or apart of a dodgy business
+        Outlier_tags = Outlier_tags.withColumn('Potential_Outlier', when((Outlier_tags.dollar_value <= col('Upper_limit')) & (Outlier_tags.dollar_value >= col('Lower_limit')) & (col('Natural_var') == False), False)
+                                                    .otherwise(True))
+        # Join the new attributes obtained above to the transaction spark dataframe
+        Outlier_tags = Outlier_tags.select(['order_id', 'Natural_var', 'Potential_Outlier'])
+        full_dataset = full_dataset.join(Outlier_tags, on='order_id')
+        return full_dataset

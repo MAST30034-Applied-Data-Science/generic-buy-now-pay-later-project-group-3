@@ -3,7 +3,7 @@ import utils as u
 
 from pyspark.sql import SparkSession
 from pyspark.sql.types import FloatType
-from pyspark.sql.functions import col, round
+from pyspark.sql.functions import col, round, monotonically_increasing_id
 
 class Clean():
     """
@@ -55,14 +55,15 @@ class Clean():
         """
         Function to drop unnecessary columns
         """
+        # Replace order_id with index
         self.transactions = self.transactions.drop("order_id")
+        self.transactions = self.transactions.withColumn("order_id", monotonically_increasing_id())
 
     def convert_data(self):
         """
         Function to convert datatypes of the following probabilites
             - Convert fraud probabilites column from string to float
         """
-
         self.c_fraud = self.c_fraud.withColumn("fraud_probability", col("fraud_probability").cast(FloatType()))
         self.m_fraud = self.m_fraud.withColumn("fraud_probability", col("fraud_probability").cast(FloatType()))
 
