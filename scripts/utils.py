@@ -10,7 +10,7 @@ def read_tables(sp: SparkSession, file: str, ftype = "p"):
     Helper function to read data from the desginated folder
 
     sp : Current SparkSession
-    type : Type of data/Name of file name to be read
+    file : Type of data/Name of file name to be read
     ftype : File type (Parquet(p) or CSV(c))
 
     returns DataFrame read

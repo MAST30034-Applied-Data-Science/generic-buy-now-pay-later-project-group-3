@@ -19,6 +19,7 @@ class Download():
         """
         self.download_tax()
         self.download_postcodes()
+        # self.industry_data()
     
     def download_tax(self):
         """
@@ -41,6 +42,12 @@ class Download():
         urlretrieve(source, file_location)
 
         print("Download Post code verification data complete")
+
+    def industry_data(self):
+        """
+        Function to download industry specific related data
+        """
+        pass
 
     def safety_check(self, dir_name = None):
         """
