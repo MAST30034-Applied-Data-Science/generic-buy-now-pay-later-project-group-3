@@ -9,18 +9,28 @@ def BNPL_ranker():
     Main funtion that calls and runs all scripts. Please view terminal for output on progress.
     """
     # Download
-    _download()
+    # _download()
 
     # c = Clean()
+    _clean()
+
     # p = Process()
-    pass
+    # _process()
 
 def _download():
     """
-    Function to deal with all download based code
+    Function to call with all download based code
     """
     d = Download()
     d.download_external()
     del d
 
-# BNPL_ranker()
+def _clean():
+    """
+    Function to call all cleaning based code
+    """
+    c = Clean()
+    c.clean_all()
+    del c
+
+BNPL_ranker()

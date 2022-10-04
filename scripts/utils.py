@@ -5,12 +5,13 @@ import numpy as np
 import pandas as pd
 from pyspark.sql import SparkSession, DataFrame
 
-def read_tables(sp: SparkSession, file: str, ftype = "p"):
+def read_tables(sp: SparkSession, file: str, ftype = "p", sample=False):
     """
     Helper function to read data from the desginated folder
 
     sp : Current SparkSession
     file : Type of data/Name of file name to be read
+            (if file is "transactions" no ftype needed)
     ftype : File type (Parquet(p) or CSV(c))
 
     returns DataFrame read
@@ -32,7 +33,9 @@ def read_tables(sp: SparkSession, file: str, ftype = "p"):
         for g in groups:
             final_list.append(sp.read.parquet(dir + g))
 
-        return reduce(DataFrame.unionAll, final_list)
+        if not sample:
+            return reduce(DataFrame.unionAll, final_list)
+        return reduce(DataFrame.unionAll, final_list).sample(0.01)
 
     # Special file
     elif file == "tbl_consumer":
