@@ -18,7 +18,7 @@ class Download():
         Function to download all the external datasets
         """
         self.download_tax()
-        # self.download_postcodes()
+        self.download_postcodes()
     
     def download_tax(self):
         """
@@ -35,7 +35,12 @@ class Download():
         """
         Function to download a list of postcodes of Aus
         """
-        pass
+        source = "https://drive.google.com/uc?export=download&id=1ihZ1aHSu3mqIHzii5UD2VEZNldIUkonn"
+    
+        file_location = self.safety_check() + "/postcode_verification.csv"
+        urlretrieve(source, file_location)
+
+        print("Download Post code verification data complete")
 
     def safety_check(self, dir_name = None):
         """
