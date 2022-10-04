@@ -245,6 +245,12 @@ class Process():
         full_dataset = full_dataset.join(Outlier_tags, on='order_id')
         return full_dataset
 
-    
+    def compute_month_entropy(self):
+        monthly_trans = self.transactions.withColumn("order_month", 
+                                    date_format('order_datetime','yyyy-MM'))
+        monthly = monthly_trans.groupBy("merchant_abn", "order_month").count()
+        a = monthly.select('column1').distinct().collect()
+
+        
 
 
