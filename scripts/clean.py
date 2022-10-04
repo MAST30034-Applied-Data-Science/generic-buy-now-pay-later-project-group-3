@@ -67,6 +67,15 @@ class Clean():
         self.c_fraud = self.c_fraud.withColumn("fraud_probability", col("fraud_probability").cast(FloatType()))
         self.m_fraud = self.m_fraud.withColumn("fraud_probability", col("fraud_probability").cast(FloatType()))
 
+    def change_column(self):
+        """
+        Function to change consumer_id to user_id in the consumer table
+        """
+        consumer = u.read_tables(self.sp, "tbl_consumer")
+        lookup = u.read_tables(self.sp, "consumer_user_details", "p")
+
+        consumer.join(lookup, on="consumer_id").write.parquet("../data/curated/consumer_details")
+
     def write_all(self):
         """
         Function to write all cleaned data into curated
