@@ -14,7 +14,7 @@ def read_tables(sp: SparkSession, file: str, ftype = "p", sample=False):
             (if file is "transactions" no ftype needed)
     ftype : File type (Parquet(p) or CSV(c))
 
-    returns DataFrame read
+    returns DataFrame
     """
     # Root directory
     dir = "../data/tables/"
