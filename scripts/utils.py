@@ -31,7 +31,7 @@ def read_tables(sp: SparkSession, file: str, ftype = "p", sample=False):
         # Read the different transaction folders
         final_list = []
         for g in groups:
-            final_list.append(sp.read.parquet(dir + g))
+            final_list.append(sp.read.option("inferSchema", True).parquet(dir + g))
 
         if not sample:
             return reduce(DataFrame.unionAll, final_list)
@@ -39,13 +39,13 @@ def read_tables(sp: SparkSession, file: str, ftype = "p", sample=False):
 
     # Special file
     elif file == "tbl_consumer":
-        return sp.read.option("header", True).option("delimiter", "|").csv("../data/tables/tbl_consumer.csv")
+        return sp.read.option("inferSchema", True).option("header", True).option("delimiter", "|").csv("../data/tables/tbl_consumer.csv")
 
     # Parquet files
     if ftype == "p":
-        return sp.read.parquet(dir + file + ".parquet")
+        return sp.read.option("inferSchema", True).parquet(dir + file + ".parquet")
     elif ftype == "c":
-        return sp.read.option("header", True).csv(dir + file + ".csv")
+        return sp.read.option("inferSchema", True).option("header", True).csv(dir + file + ".csv")
 
 def write_data(data: DataFrame, folder: str, fname: str):
     """

@@ -17,6 +17,8 @@ class Clean():
             .getOrCreate()
         )
         self.transactions = u.read_tables(self.sp, "transactions")
+        self.c_fraud = u.read_tables(self.sp, "consumer_fraud_probability" , "c")
+        self.m_fraud = u.read_tables(self.sp, "consumer_fraud_probability", "c")
 
     def __del__(self):
         self.sp.stop
@@ -30,9 +32,11 @@ class Clean():
         # Call list of cleaning functions
         self.dollar_value()
         self.drop_cols()
+        self.convert_data()
 
         # Write final data into curated folder
-        u.write_data(self.transactions, "curated", "transactions")
+        self.write_all()
+        
 
     def clean_tax_income(self):
         # Update to include tax income data (EXAMPLE ONLY)
@@ -52,3 +56,26 @@ class Clean():
         Function to drop unnecessary columns
         """
         self.transactions = self.transactions.drop("order_id")
+
+    def convert_data(self):
+        """
+        Function to convert datatypes of the following probabilites
+            - Convert fraud probabilites column from string to float
+        """
+
+        self.c_fraud = self.c_fraud.withColumn("fraud_probability", col("fraud_probability").cast(FloatType()))
+        self.m_fraud = self.m_fraud.withColumn("fraud_probability", col("fraud_probability").cast(FloatType()))
+
+    def write_all(self):
+        """
+        Function to write all cleaned data into curated
+        """
+        folder = "curated"
+
+        # Files to write
+        u.write_data(self.transactions, folder, "transactions")
+        u.write_data(self.c_fraud, folder, "customer_fraud")
+        u.write_data(self.m_fraud, folder, "merchant_fraud")
+
+        print("Files have been written")
+
