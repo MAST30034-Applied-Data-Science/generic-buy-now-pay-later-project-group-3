@@ -220,18 +220,23 @@ class Process():
         Fst_percentile = expr('percentile_approx(dollar_value, 0.25)')
         Trd_percentile = expr('percentile_approx(dollar_value, 0.75)')
         Second_percentile = expr('percentile_approx(dollar_value, 0.5)')
+
         Outlier_tags = full_dataset.groupBy('merchant_abn').agg(Fst_percentile.alias('1_val'), Trd_percentile.alias('3_val'), Second_percentile.alias('2_val'), count('dollar_value').alias('Count'))
         Outlier_tags = Outlier_tags.withColumn('SIQR_Lower', col('2_val') - col('1_val'))
         Outlier_tags = Outlier_tags.withColumn('SIQR_Upper', col('3_val') - col('2_val'))
+
         # Now calculate the limits
         Outlier_tags = Outlier_tags.withColumn('Upper_limit', col('3_val') + 3 * col('SIQR_Upper'))
         Outlier_tags = Outlier_tags.withColumn('Lower_limit', col('1_val') - 3 * col('SIQR_Lower'))
+
         # after noticing that some merchants only have one transaction value (i.e one dollar_value amount for all transactios)
         # decided to removed due to unrealisic distributed data 
         Outlier_tags = Outlier_tags.withColumn('Natural_var', when((col('Upper_limit') == col('Lower_limit')) & (col('Count') > 10), True).otherwise(False))
         Outlier_tags = Outlier_tags.select('merchant_abn', 'Upper_limit', 'Lower_limit', 'Natural_var')
+        
         # Now all we need to do is join this data to each transaction, then can select the transactios which are (not) within the limits
         Outlier_tags = full_dataset.select('merchant_abn', 'order_id', 'user_id', 'dollar_value').join(Outlier_tags, on= ['merchant_abn'])
+        
         # finally identify the outliers which fall out of distribution or apart of a dodgy business
         Outlier_tags = Outlier_tags.withColumn('Potential_Outlier', when((Outlier_tags.dollar_value <= col('Upper_limit')) & (Outlier_tags.dollar_value >= col('Lower_limit')) & (col('Natural_var') == False), False)
                                                     .otherwise(True))
