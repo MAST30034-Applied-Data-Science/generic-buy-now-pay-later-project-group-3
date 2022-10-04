@@ -12,10 +12,10 @@ def BNPL_ranker():
     # _download()
 
     # c = Clean()
-    _clean()
+    # _clean()
 
     # p = Process()
-    # _process()
+    _process()
 
 def _download():
     """
@@ -32,5 +32,13 @@ def _clean():
     c = Clean()
     c.clean_all()
     del c
+
+def _process():
+    """
+    Function to call all processed based code
+    """
+    p = Process()
+    p.transform()
+    del p
 
 BNPL_ranker()

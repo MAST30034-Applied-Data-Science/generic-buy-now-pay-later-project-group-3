@@ -2,6 +2,8 @@ import os
 from zipfile import ZipFile
 from urllib.request import urlretrieve
 
+import utils as u
+
 class Download():
     """
     Call all download functions and delete variables when done
@@ -27,7 +29,7 @@ class Download():
         """
         source = "https://drive.google.com/uc?export=download&id=10VZ0auZjhD_eXboBDBo-8LRlxRi_RpU5"
     
-        file_location = self.safety_check() + "/tax_income.csv"
+        file_location = u.safety_check() + "/tax_income.csv"
         urlretrieve(source, file_location)
 
         print("Download Tax/Income data complete")
@@ -38,7 +40,7 @@ class Download():
         """
         source = "https://drive.google.com/uc?export=download&id=1ihZ1aHSu3mqIHzii5UD2VEZNldIUkonn"
     
-        file_location = self.safety_check() + "/postcode_verification.csv"
+        file_location = u.safety_check() + "/postcode_verification.csv"
         urlretrieve(source, file_location)
 
         print("Download Post code verification data complete")
@@ -48,21 +50,3 @@ class Download():
         Function to download industry specific related data
         """
         pass
-
-    def safety_check(self, dir_name = None):
-        """
-        Function to perform checks of directory folders
-        """
-        # Safety check
-        output_dir = "../data/tables/"
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-
-        if not (dir_name is None):
-            # Create a directory for source group
-            target_dir = output_dir + dir_name
-            if not os.path.exists(target_dir):
-                os.makedirs(target_dir)
-
-            return target_dir
-        return output_dir
