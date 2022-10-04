@@ -93,7 +93,7 @@ class Process():
 
         # total transactions with unidentified customers
         unknown_cust = (transactions.select('user_id').distinct()) \
-                        .subtract(customers.select(col('consumer_id')))
+                        .subtract(customers.select(col('user_id')))   #Loky's change here to match "ONLY user_id"
         unknown_cust_list = unknown_cust.rdd.map(lambda x: x.user_id).collect()
 
         # transactions with registered merchant ABNs but unknown customer IDs
@@ -197,7 +197,7 @@ class Process():
         """
         # list of registered customer IDs
         unknown_cust = (trans.select('user_id').distinct()) \
-                        .subtract(cust.select(col('consumer_id')))
+                        .subtract(cust.select(col('user_id')))   #Loky's change here to match "ONLY user_id" 
         unknown_cust_list = unknown_cust.rdd.map(lambda x: x.user_id).collect()
 
         # transactions with registered customer IDs
@@ -244,3 +244,7 @@ class Process():
         Outlier_tags = Outlier_tags.select(['order_id', 'Natural_var', 'Potential_Outlier'])
         full_dataset = full_dataset.join(Outlier_tags, on='order_id')
         return full_dataset
+
+    
+
+
