@@ -16,9 +16,12 @@ class Clean():
             .config("spark.sql.session.timeZone", "+11")
             .getOrCreate()
         )
+        self.user_lookup = u.read_tables(self.sp, "consumer_user_details")
         self.transactions = u.read_tables(self.sp, "transactions")
+        self.consumer = u.read_tables(self.sp, "tbl_consumer","c")
         self.c_fraud = u.read_tables(self.sp, "consumer_fraud_probability" , "c")
         self.m_fraud = u.read_tables(self.sp, "consumer_fraud_probability", "c")
+       
 
     def __del__(self):
         self.sp.stop
@@ -37,7 +40,16 @@ class Clean():
         # Write final data into curated folder
         self.write_all()
         
-
+    def transform_consumer_id(self):
+        """
+        Merely change consumer_id in all datasets to user_id, by changing the consumer fraud and 
+        consumer dataframes.
+        """
+        self.consumer = self.consumer.join(self.user_lookup, on="consumer_id")
+        self.consumer = self.consumer.drop("consumer_id")
+        
+        
+        
     def clean_tax_income(self):
         # Update to include tax income data (EXAMPLE ONLY)
         tax_income = u.read_tables(self.sp, "tax_income", "c")
@@ -79,4 +91,6 @@ class Clean():
         u.write_data(self.m_fraud, folder, "merchant_fraud")
 
         print("Files have been written")
+
+
 
