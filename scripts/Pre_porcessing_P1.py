@@ -196,6 +196,16 @@ def potential_outlier(full_dataset):
     full_dataset = full_dataset.join(Outlier_tags, on='order_id')
     return full_dataset
 
+# This function adds aggregated attributes about each custumers record dealing with unregistered merchants
+def customer_unregistered_merchants(full_dataset, customer_tbl): 
+    total_agg = full_dataset.groupBy('user_id').agg(F.count(F.col('Earnings_Class')).alias('Total_Transaction_Count'), F.round(F.sum(F.col('dollar_value')), 2).alias('Total_Dollars_Spent'))
+    unreg_total_count = full_dataset.groupBy('user_id').agg(F.sum(F.col('Earnings_Class').isNull().cast("int")).alias('Ungeristered_Merch_Transactions_count'))
+    unreg_total_dol = full_dataset.where(F.col('Earnings_Class').isNull()).groupBy('user_id').agg(F.round(F.sum(F.col('dollar_value')), 2).alias('Ungeristered_Merch_Total_Spent'))
+    customer_tbl = customer_tbl.join(total_agg, on='user_id', how='left').join(unreg_total_count, on='user_id', how='left').join(unreg_total_dol, on='user_id', how='left')
+    customer_tbl = customer_tbl.na.fill(value=0)
+    customer_tbl = customer_tbl.withColumn('Proportion_Unreg_Merchant_Transactions', F.round(F.col('Ungeristered_Merch_Transactions_count') / F.col('Total_Transaction_Count'), 2))
+    customer_tbl = customer_tbl.withColumn('Proportion_Unregistered_Dollars_Spent', F.round(F.col('Ungeristered_Merch_Total_Spent') / F.col('Total_Dollars_Spent'), 2))
+    return customer_tbl
 def main():
     # open spark
     spark = open_spark()
@@ -208,11 +218,14 @@ def main():
     merchants = merchant_process(merchants_tbl, spark)
     # process the customers 
     customer_tbl = postcode_add(customer_tbl, spark)
-    # Join the datasets
     customer_tbl = customer_tbl.join(consumer_details, ['consumer_id'])
+    all_transactions = transactions.join(merchants, ['merchant_abn'], how='left')
+    customer_tbl = customer_unregistered_merchants(all_transactions, customer_tbl)
+    # Join the datasets
     full_dataset = transactions.join(customer_tbl, ['user_id'])
     merchants = merchants.withColumnRenamed('name','company_name')
     full_dataset = full_dataset.join(merchants, ['merchant_abn'])
+
     # Now lets rename and standardise some of our attributes
     full_dataset = full_dataset_refine(full_dataset)
     # Finally, lets only keep the desirable features, then save the dataset
