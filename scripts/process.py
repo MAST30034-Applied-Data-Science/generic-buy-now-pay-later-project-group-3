@@ -1,10 +1,12 @@
 import os
+import numpy as np
 import pandas as pd
+from pyspark.sql.types import FloatType
 
 import utils as u
 
 from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.functions import col, countDistinct, date_format, expr, count, when
+from pyspark.sql.functions import col, countDistinct, date_format, dayofweek, expr, count, when, dayofmonth, month
 
 class Process():
     """
@@ -39,12 +41,17 @@ class Process():
         self.transaction_transform()
         u.write_data(self.transactions, "processed", "transactions")
 
+        # CUSTOMERS
+        self.customer_transform()
+        u.write_data(self.customers, "processed", "customers")
+
     def merchant_transform(self):
         """
         Call all functions with regards to merchants
         """
         # Growth features
         self.merchants = self.create_cust_growth_column(self.merchants, self.transactions)
+        self.merchants = self.merchant_entropy()
 
     def transaction_transform(self):
         """
@@ -52,6 +59,13 @@ class Process():
         """
         self.transactions = self.potential_outlier(self.transactions)
         self.transactions = self.get_holidays()
+        self.datetime_features()
+
+    def customer_transform(self):
+        """
+        Function to call all the customer data
+        """
+        self.customers = self.postcode_add(self.sp, self.customers)
 
     def get_holidays(self):
         """
@@ -91,7 +105,7 @@ class Process():
         sorted_monthly = monthly.sort(['merchant_abn', 'order_month'])
 
         return self.get_monthly_increase(sorted_monthly.toPandas())
-        
+
     def get_monthly_increase(self, monthly_df):
         '''
         Args:
@@ -115,7 +129,14 @@ class Process():
             differences.append(monthly_df['distinct_customers'][i+1] - monthly_df['distinct_customers'][i])
 
         growth = pd.DataFrame.from_dict({"merchant_abn": abns, "avg_monthly_inc": incs})
-        return self.sp.createDataFrame(growth)
+        return self.sp.createDataFrame(growth).withColumn("avg_monthly_inc", col("avg_monthly_inc").cast(FloatType()))
+
+    def merchant_entropy(self):
+        """
+        Function to use entropy of merchants based on postcode and monthly revenue
+        """
+        entropy = self.sp.read.option("inferSchema", True).parquet("../data/tables/entropy")
+        return self.merchants.join(entropy, on="merchant_abn")
 
     def potential_outlier(self, full_dataset):
         '''
@@ -157,3 +178,68 @@ class Process():
         Outlier_tags = Outlier_tags.select(['order_id', 'Natural_var', 'Potential_Outlier'])
         full_dataset = full_dataset.join(Outlier_tags, on='order_id')
         return full_dataset
+
+    def datetime_features(self):
+        """
+        Function to extract date features like day, month, day of week for transaction data
+        """
+        self.transactions = self.transactions.withColumn("dayofmonth", dayofmonth(self.transactions.order_datetime))
+        self.transactions = self.transactions.withColumn("month", month(self.transactions.order_datetime))
+        self.transactions = self.transactions.withColumn("dayofweek", dayofweek(self.transactions.order_datetime))
+
+    def postcode_add(self, spark: SparkSession, customer_dataset: DataFrame):
+        # load data 
+        cust = customer_dataset.toPandas()
+        postcodes = pd.read_csv("../data/tables/australian_postcodes.csv")
+        keep_columns = ['postcode', 'state', 'sa3name', 'sa4name', 'SA3_NAME_2016', 'electoraterating', 'electorate']
+        postcodes = postcodes[keep_columns]
+        
+        # First imputate missing values
+        for col in postcodes.columns[1:]:
+            postcodes[col] = postcodes.groupby("state")[col].transform(lambda x: x.fillna(x.mode()))
+        postcodes_agg = postcodes.groupby(['state', 'postcode'], as_index=False).agg(sa3name = pd.NamedAgg('sa3name',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN),
+                                                        sa4name = pd.NamedAgg('sa4name',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN),
+                                                        electoraterating = pd.NamedAgg('electoraterating',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN),
+                                                        SA3_NAME_2016 = pd.NamedAgg('SA3_NAME_2016',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN),
+                                                        electorate = pd.NamedAgg('electorate',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN)
+                                                        )
+        # Imputate
+        imputation = postcodes_agg.groupby('state', as_index=False).agg(sa3name_mode = pd.NamedAgg('sa3name',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN),
+                                                        sa4name_mode = pd.NamedAgg('sa4name',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN),
+                                                        electoraterating_mode = pd.NamedAgg('electoraterating',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN),
+                                                        SA3_NAME_2016_mode = pd.NamedAgg('SA3_NAME_2016',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN),
+                                                        electorate_mode = pd.NamedAgg('electorate',lambda x: pd.Series.mode(x) if len(pd.Series.mode(x))>0 else np.NaN)
+                                                        )
+        postcodes_agg = postcodes_agg.merge(imputation, on='state', how='left')
+        postcodes_agg.sa3name.fillna(postcodes_agg.sa3name_mode, inplace=True)
+        postcodes_agg.sa4name.fillna(postcodes_agg.sa4name_mode, inplace=True)
+        postcodes_agg.electoraterating.fillna(postcodes_agg.electoraterating_mode, inplace=True)
+        postcodes_agg.SA3_NAME_2016.fillna(postcodes_agg.SA3_NAME_2016_mode, inplace=True)
+        postcodes_agg.electorate.fillna(postcodes_agg.electorate_mode, inplace=True)
+        postcodes_agg = postcodes_agg.drop(['sa3name_mode', 'sa4name_mode', 'electoraterating_mode', 'SA3_NAME_2016_mode', 'electorate_mode'], axis = 1)
+        tax_data = pd.read_csv("../data/tables/tax_income.csv")
+        
+        # First remove duplicate columns 
+        tax_data = tax_data.T.drop_duplicates().T
+        tax_columns = tax_data.columns[1:]
+        
+        # IMPUTATION TIME
+        postcodes_agg = postcodes_agg.join(tax_data, lsuffix='postcode', rsuffix='Postcode', how='left')
+        for col in tax_columns:
+            for agg_name in ['sa4name', 'electorate', 'electoraterating']:
+                postcodes_agg[col] = postcodes_agg.groupby(agg_name)[col].transform(lambda x: x.fillna(x.mean()))
+            postcodes_agg[col] = postcodes_agg[col].apply(np.ceil).astype('int')
+        postcodes_agg.set_index(['state', 'postcode'], inplace = True)
+        cust.set_index(['state', 'postcode'], inplace= True)
+        customer_tbl = cust.join(postcodes_agg, how='left')
+        customer_tbl = customer_tbl.reset_index()
+        customer_tbl.drop(columns='Postcode', inplace = True)
+        
+        # set some types 
+        customer_tbl['SA3_NAME_2016'] = customer_tbl['SA3_NAME_2016'].astype('str')
+        customer_tbl['sa3name'] = customer_tbl['sa3name'].astype('str')
+        
+        # convert back to original form
+        customer_tbl = spark.createDataFrame(customer_tbl)
+        customer_tbl = customer_tbl.drop("sa3name", "sa4name", "SA3_NAME_2016", "electorate")
+        return customer_tbl.drop("name", "address", "electoraterating")

@@ -12,7 +12,7 @@ def BNPL_ranker():
     # _download()
 
     # c = Clean()
-    _clean()
+    # _clean()
 
     # p = Process()
     _process()
