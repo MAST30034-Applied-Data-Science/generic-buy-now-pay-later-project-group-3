@@ -73,8 +73,8 @@ class Clean():
         Function to change consumer_id to user_id in the consumer table
         """
         consumer = u.read_tables(self.sp, "tbl_consumer")
-        lookup = u.read_tables(self.sp, "consumer_user_details", "p")
-        u.write_data(consumer.join(lookup, on="consumer_id").drop("consumer_id"), "curated", "consumer_details")
+        lookup = u.read_tables(self.sp, "consumer_user_details", "p").drop("consumer_id", "name", "address")
+        u.write_data(consumer.join(lookup, on="consumer_id"), "curated", "consumer_details")
 
     def write_all(self):
         """
