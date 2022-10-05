@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
+from pyspark.sql.types import FloatType
 
 import utils as u
 
@@ -51,6 +52,7 @@ class Process():
         """
         # Growth features
         self.merchants = self.create_cust_growth_column(self.merchants, self.transactions)
+        self.merchants = self.merchant_entropy()
 
     def transaction_transform(self):
         """
@@ -104,7 +106,7 @@ class Process():
         sorted_monthly = monthly.sort(['merchant_abn', 'order_month'])
 
         return self.get_monthly_increase(sorted_monthly.toPandas())
-        
+
     def get_monthly_increase(self, monthly_df):
         '''
         Args:
@@ -128,7 +130,14 @@ class Process():
             differences.append(monthly_df['distinct_customers'][i+1] - monthly_df['distinct_customers'][i])
 
         growth = pd.DataFrame.from_dict({"merchant_abn": abns, "avg_monthly_inc": incs})
-        return self.sp.createDataFrame(growth)
+        return self.sp.createDataFrame(growth).withColumn("avg_monthly_inc", col("avg_monthly_inc").cast(FloatType()))
+
+    def merchant_entropy(self):
+        """
+        Function to use entropy of merchants based on postcode and monthly revenue
+        """
+        entropy = self.sp.read.option("inferSchema", True).parquet("../data/tables/entropy")
+        return self.merchants.join(entropy, on="merchant_abn")
 
     def potential_outlier(self, full_dataset):
         '''
