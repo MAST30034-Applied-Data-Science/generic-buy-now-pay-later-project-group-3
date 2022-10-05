@@ -154,7 +154,7 @@ def read_all_transactions(input_dir, spark):
     transaction = spark.read.parquet(files.pop(0))
     for file in files:
         transaction_add = spark.read.parquet(file)
-        transaction.unionByName(transaction_add, True)
+        transaction = transaction.unionByName(transaction_add, True)
     return transaction
 
 # This function is used to refine the final dataset
