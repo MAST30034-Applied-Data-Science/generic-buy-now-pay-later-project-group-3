@@ -29,7 +29,7 @@ class Download():
         """
         source = "https://drive.google.com/uc?export=download&id=10VZ0auZjhD_eXboBDBo-8LRlxRi_RpU5"
     
-        file_location = u.safety_check() + "/tax_income.csv"
+        file_location = u.safety_check("tables") + "/tax_income.csv"
         urlretrieve(source, file_location)
 
         print("Download Tax/Income data complete")
@@ -40,7 +40,7 @@ class Download():
         """
         source = "https://drive.google.com/uc?export=download&id=1ihZ1aHSu3mqIHzii5UD2VEZNldIUkonn"
     
-        file_location = u.safety_check() + "/postcode_verification.csv"
+        file_location = u.safety_check("tables") + "/postcode_verification.csv"
         urlretrieve(source, file_location)
 
         print("Download Post code verification data complete")
