@@ -132,6 +132,7 @@ dmypy.json
 data/curated/
 data/raw/
 data/processed/
+data/tables.zip
 
 # plots
 plots/general_sa2_visuals.html
