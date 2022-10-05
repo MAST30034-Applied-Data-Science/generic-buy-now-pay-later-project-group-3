@@ -4,7 +4,7 @@ import pandas as pd
 import utils as u
 
 from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.functions import col, countDistinct, date_format, expr, count, when
+from pyspark.sql.functions import col, countDistinct, date_format, dayofweek, expr, count, when, dayofmonth, month
 
 class Process():
     """
@@ -52,6 +52,7 @@ class Process():
         """
         self.transactions = self.potential_outlier(self.transactions)
         self.transactions = self.get_holidays()
+        self.datetime_features()
 
     def get_holidays(self):
         """
@@ -157,3 +158,11 @@ class Process():
         Outlier_tags = Outlier_tags.select(['order_id', 'Natural_var', 'Potential_Outlier'])
         full_dataset = full_dataset.join(Outlier_tags, on='order_id')
         return full_dataset
+
+    def datetime_features(self):
+        """
+        Function to extract date features like day, month, day of week for transaction data
+        """
+        self.transactions = self.transactions.withColumn("dayofmonth", dayofmonth(self.transactions.order_datetime))
+        self.transactions = self.transactions.withColumn("month", month(self.transactions.order_datetime))
+        self.transactions = self.transactions.withColumn("dayofweek", dayofweek(self.transactions.order_datetime))

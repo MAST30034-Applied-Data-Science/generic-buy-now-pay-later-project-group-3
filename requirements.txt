@@ -4,3 +4,4 @@ wheel
 ipykernel
 pyspark
 fastparquet
+scipy
