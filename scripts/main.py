@@ -41,4 +41,4 @@ def _process():
     p.transform()
     del p
 
-BNPL_ranker()
+# BNPL_ranker()
