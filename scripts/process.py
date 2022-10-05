@@ -1,10 +1,11 @@
-import os
 import pandas as pd
 
 import utils as u
 
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import col, countDistinct, date_format, expr, count, when
+from scipy.stats import entropy
+
 
 class Process():
     """
@@ -22,7 +23,7 @@ class Process():
         self.transactions = u.read_curated(self.sp, "transactions")
         self.merchants = u.read_tables(self.sp, "tbl_merchants", "p")
         # self.merchants = u.read_processed(self.sp, "merchants")
-        self.customers = u.read_tables(self.sp, "tbl_consumer", "c")
+        self.customers = u.read_curated(self.sp, "consumer")
 
     def __del__(self):
         self.sp.stop
@@ -245,12 +246,49 @@ class Process():
         full_dataset = full_dataset.join(Outlier_tags, on='order_id')
         return full_dataset
 
-    def compute_month_entropy(self):
+    def compute_postcode_entropy(self):
+        '''
+            function to compute entropy for each merchant based on different postcode of the customers of each 
+            transaction.
+        '''
+        trans_with_postcode = self.transactions.join(self.customers.select(["user_id", "postcode"]), on="user_id")
+        by_postcode = trans_with_postcode.groupBy("merchant_abn", "postcode").count()
+        by_postcode = by_postcode.toPandas()
+        merchants_list = by_postcode["merchant_abn"].unique().tolist()
+        
+
+        entropies = {}
+        for abn in  merchants_list:
+    
+            this_merchant = by_postcode.loc[by_postcode['merchant_abn'] == abn]
+            num_transc = this_merchant["count"]
+            entropies[abn] = entropy(num_transc)
+        return entropies
+        
+        
+
+    def compute_monthly_entropy(self):
+        '''
+        Compute entropy for each merchant, base on number of transactions each month
+        '''
         monthly_trans = self.transactions.withColumn("order_month", 
                                     date_format('order_datetime','yyyy-MM'))
         monthly = monthly_trans.groupBy("merchant_abn", "order_month").count()
-        a = monthly.select('column1').distinct().collect()
 
+        monthly = monthly.toPandas()
+        a = monthly["merchant_abn"].unique().tolist()
+        #print(a)
+
+        entropies = {}
+        for abn in a:
+    
+            this_merchant = monthly.loc[monthly['merchant_abn'] == abn]
+            by_month = this_merchant["count"]
+            entropies[abn] = entropy(by_month)
+        return entropy
         
+
+#process = Process()
+#process.compute_postcode_entropy()   
 
 

@@ -33,6 +33,7 @@ class Clean():
         """
         
         # Call list of cleaning functions
+        self.transform_consumer_id()
         self.dollar_value()
         self.drop_cols()
         self.convert_data()
@@ -89,8 +90,8 @@ class Clean():
         u.write_data(self.transactions, folder, "transactions")
         u.write_data(self.c_fraud, folder, "customer_fraud")
         u.write_data(self.m_fraud, folder, "merchant_fraud")
-
+        u.write_data(self.consumer, folder, "consumer")
         print("Files have been written")
 
-
-
+cleaner = Clean()
+cleaner.clean_all()
