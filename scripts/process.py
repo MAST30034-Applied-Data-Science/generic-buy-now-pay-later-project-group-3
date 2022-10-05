@@ -43,7 +43,6 @@ class Process():
 
         # CUSTOMERS
         self.customer_transform()
-        self.customers.show(3)
         u.write_data(self.customers, "processed", "customers")
 
     def merchant_transform(self):
@@ -243,4 +242,4 @@ class Process():
         # convert back to original form
         customer_tbl = spark.createDataFrame(customer_tbl)
         customer_tbl = customer_tbl.drop("sa3name", "sa4name", "SA3_NAME_2016", "electorate")
-        return customer_tbl.drop()
+        return customer_tbl.drop("name", "address", "electoraterating")
