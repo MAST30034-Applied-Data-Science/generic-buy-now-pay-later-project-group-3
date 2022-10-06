@@ -134,6 +134,12 @@ data/raw/
 data/processed/
 data/tables.zip
 
+# Model ata
+models/classifier
+models/train_vector
+models/val_vector
+models/test_vector
+
 # plots
 plots/general_sa2_visuals.html
 
