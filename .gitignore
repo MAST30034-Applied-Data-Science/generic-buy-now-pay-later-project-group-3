@@ -134,6 +134,15 @@ data/raw/
 data/processed/
 data/tables.zip
 
+# Model data
+models/classifier
+models/classifier/data
+models/classifier/metadata
+
+models/train_vector
+models/val_vector
+models/test_vector
+
 # plots
 plots/general_sa2_visuals.html
 
