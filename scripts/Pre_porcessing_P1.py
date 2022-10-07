@@ -9,6 +9,7 @@ import os
 import glob
 import numpy as np
 from pyspark.sql.types import *
+import csv
 #nltk.download('stopwords')
 #nltk.download('wordnet')
 #nltk.download('omw-1.4')
@@ -112,6 +113,25 @@ def tag_extract(tag_string):
     new_string.append(float(re.search(r'[0-9]+\.[0-9]+',string_cut[2]).group()))
     return(new_string)
 
+# This takes the dataset, and assigns the tag an unique integer value
+def description_convert(processed_tags):
+    # first work out how many tags in list 
+    # Now assign each tag a value 
+    assign = 0
+    lookup_tags = {}
+    for tag in processed_tags:
+        lookup_tags[tag] = assign
+        assign = assign + 1
+    # Write lookup table
+    with open('../data/tables/description_lookup.csv', 'w') as f:
+        for key in lookup_tags.keys():
+           f.write("%s, %s\n" % (key, lookup_tags[key]))
+    # now convert values
+    new_tags = []
+    for tag in processed_tags:
+        new_tags.append(lookup_tags[tag])
+    return new_tags
+
 # This function takes the pandas dataframe containing merchant information and pre_processes it
 def merchant_process(merchants, spark):
     merchants = merchants.toPandas()
@@ -121,6 +141,7 @@ def merchant_process(merchants, spark):
     for i in tags:
         processed_tags.append(tag_extract(i))
     merchant_tbl = pd.DataFrame(processed_tags, columns=('Description', 'Earnings_Class', 'BNPL_Fee'))
+    merchant_tbl['Description'] = description_convert(list(merchant_tbl['Description'].values))
     merchant_tbl = pd.concat([merchants, merchant_tbl], axis=1)
     # drop the tags column 
     merchant_tbl.drop(columns='tags', inplace=True)
@@ -133,7 +154,7 @@ def read_all_transactions(input_dir, spark):
     transaction = spark.read.parquet(files.pop(0))
     for file in files:
         transaction_add = spark.read.parquet(file)
-        transaction.unionByName(transaction_add, True)
+        transaction = transaction.unionByName(transaction_add, True)
     return transaction
 
 # This function is used to refine the final dataset
@@ -233,6 +254,8 @@ def main():
     # Now lets add the Potential outlier attribute to each transaction
     full_dataset = potential_outlier(full_dataset)
     full_dataset.write.parquet('../data/curated/full_dataset', mode='overwrite')
+
+####################################################################################
 
 ####################################################################################
 
