@@ -132,7 +132,16 @@ dmypy.json
 data/curated/
 data/raw/
 data/tables/
-data/curated/
+data/tables.zip
+data/processed
+
+# Model data
+models/classifier
+models/classifier/metadata
+models/classifier/data
+models/train_vector
+models/val_vector
+models/test_vector
 
 # plots
 plots/general_sa2_visuals.html
