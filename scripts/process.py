@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
-from pyspark.sql.types import FloatType
+from pyspark.sql.types import FloatType, IntegerType
 
 import utils as u
 
@@ -22,7 +22,7 @@ class Process():
         
         # Variables
         self.transactions = u.read_curated(self.sp, "transactions")
-        self.merchants = u.read_tables(self.sp, "tbl_merchants", "p")
+        self.merchants = u.read_tables(self.sp, "merchants_tbl_processed", "c")
         self.customers = u.read_curated(self.sp, "consumer_details")
 
     def __del__(self):
@@ -50,6 +50,7 @@ class Process():
         Call all functions with regards to merchants
         """
         # Growth features
+        self.merchants = self.merchant_lookup()
         self.merchants = self.create_cust_growth_column(self.merchants, self.transactions)
         self.merchants = self.merchant_entropy()
 
@@ -137,6 +138,16 @@ class Process():
         """
         entropy = self.sp.read.option("inferSchema", True).parquet("../data/tables/entropy")
         return self.merchants.join(entropy, on="merchant_abn")
+
+    def merchant_lookup(self):
+        """
+        Function to join merchant description on lookup table to save space
+        """
+        lookup = self.sp.read.option("inferSchema", True).csv("../data/tables/description_lookup.csv")
+        lookup = lookup.withColumnRenamed("_c0", "Description").withColumnRenamed("_c1", "tag_number")
+        lookup = lookup.withColumn("tag_number", col("tag_number").cast(IntegerType()))
+
+        return self.merchants.join(lookup, on="Description").drop("Description").withColumnRenamed("tag_number", "tags")
 
     def potential_outlier(self, full_dataset):
         '''
