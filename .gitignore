@@ -139,13 +139,22 @@ models/classifier
 models/classifier/data
 models/classifier/metadata
 
+# Final vectors
 models/train_vector
 models/val_vector
 models/test_vector
 
+# Processed data
 models/train_processed
 models/test_processed
 models/val_processed
+
+# MLP Classifier
+models/full
+models/full_output
+
+# RF Classifier
+models/random_forest_output_full
 
 # plots
 plots/general_sa2_visuals.html
