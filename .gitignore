@@ -143,6 +143,10 @@ models/train_vector
 models/val_vector
 models/test_vector
 
+models/train_processed
+models/test_processed
+models/val_processed
+
 # plots
 plots/general_sa2_visuals.html
 
