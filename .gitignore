@@ -159,6 +159,7 @@ models/full_output
 # plots
 plots/general_sa2_visuals.html
 plots/foliumChoroplethMap.html
+plots/fraud_results.html
 
 # OSX .DS_Store file
 .DS_Store
