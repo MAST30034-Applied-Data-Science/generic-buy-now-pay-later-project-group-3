@@ -154,7 +154,7 @@ models/full
 models/full_output
 
 # RF Classifier
-models/random_forest_output_full
+# models/random_forest_output_full
 
 # plots
 plots/general_sa2_visuals.html
