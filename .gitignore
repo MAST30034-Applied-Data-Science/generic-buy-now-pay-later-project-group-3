@@ -158,7 +158,7 @@ models/full_output
 
 # plots
 plots/general_sa2_visuals.html
-plots/foliumChloroplethMap.html
+plots/foliumChoroplethMap.html
 
 # OSX .DS_Store file
 .DS_Store
