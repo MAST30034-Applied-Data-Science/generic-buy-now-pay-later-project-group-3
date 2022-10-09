@@ -241,7 +241,6 @@ def main():
     # process the customers 
     customer_tbl = postcode_add(customer_tbl, spark)
     customer_tbl = customer_tbl.join(consumer_details, ['consumer_id'])
-    all_transactions = transactions.join(merchants, ['merchant_abn'], how='left')
     # customer_tbl = customer_unregistered_merchants(all_transactions, customer_tbl)
     # Join the datasets
     full_dataset = transactions.join(customer_tbl, ['user_id'])
