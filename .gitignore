@@ -145,13 +145,12 @@ models/val_vector
 models/test_vector
 
 # Processed data
-models/train_processed
-models/test_processed
-models/val_processed
+models/train_raw
+models/test_raw
+models/val_raw
 
 # MLP Classifier
-models/full
-models/full_output
+models/full_raw
 
 # RF Classifier
 # models/random_forest_output_full
