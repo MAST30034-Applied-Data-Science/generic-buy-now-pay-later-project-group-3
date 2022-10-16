@@ -72,7 +72,7 @@ class Process():
         """
         Merge holiday data with transactions
         """
-        holiday = self.sp.read.option("inferSchema", True).parquet("../data/tables/holiday")
+        holiday = u.read_tables(self.sp, "holiday")
         return self.transactions.join(holiday, holiday.date == self.transactions.order_datetime, how="left").drop("date")
 
     def create_cust_growth_column(self, merchants, transactions):
@@ -136,7 +136,7 @@ class Process():
         """
         Function to use entropy of merchants based on postcode and monthly revenue
         """
-        entropy = self.sp.read.option("inferSchema", True).parquet("../data/tables/entropy")
+        entropy = u.read_tables(self.sp, "entropy")
         return self.merchants.join(entropy, on="merchant_abn")
 
     def merchant_lookup(self):

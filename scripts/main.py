@@ -9,13 +9,13 @@ def BNPL_ranker():
     Main funtion that calls and runs all scripts. Please view terminal for output on progress.
     """
     # Download
-    # _download()
+    _download()
 
     # c = Clean()
-    # _clean()
+    _clean()
 
     # p = Process()
-    _process()
+    # _process()
 
 def _download():
     """
