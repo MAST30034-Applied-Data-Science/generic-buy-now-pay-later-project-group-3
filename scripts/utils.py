@@ -1,3 +1,4 @@
+from distutils.command.clean import clean
 import os
 from functools import reduce
 
@@ -24,7 +25,7 @@ def read_tables(sp: SparkSession, file: str, ftype = "p", sample=False):
     if(sys.argv[1] != "--path"):
         print >> sys.stderr, "Incorrect format."
         sys.exit(1)
-    dir = sys.argv[2] + "/" #folder path should be at position 2.
+    dir = sys.argv[2] + "/"     #folder path should be at position 2.
 
     # Transaction folders
     if file == "transactions":
@@ -106,6 +107,13 @@ def safety_check(parent_dir: str, dir_name = None):
 
         return target_dir
     return output_dir
+def read_command_line():
+    if len(sys.argv) == 4 or sys.argv[5] == "-p":
+        return "process"
+    elif sys.argv[5] == "-d":
+        return "download only"
+    elif sys.argv[5] == "-c":
+        return "clean only"
 
 
 ##########################

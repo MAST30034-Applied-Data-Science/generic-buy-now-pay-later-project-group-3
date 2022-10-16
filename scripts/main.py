@@ -1,4 +1,4 @@
-import utils
+import utils as u
 
 from download import Download
 from clean import Clean
@@ -10,9 +10,15 @@ def BNPL_ranker():
     """
     # Download
     # _download()
-
+    if u.read_command_line() == "download only":
+        print("Downloading only task finished")
+        return
     #c = Clean()
+    
     _clean()
+    if u.read_command_line() == "clean only":
+        print("Downloading and Cleaning only task finished")
+        return
 
     #p = Process()
     _process()
