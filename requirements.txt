@@ -1,3 +1,5 @@
+The following libraries will be required to be installed to ensure operation of this repository
+______________________
 numpy
 pandas
 wheel
@@ -5,3 +7,15 @@ ipykernel
 pyspark
 fastparquet
 scipy
+nltk
+string
+glob
+os
+string
+re
+functools
+operator
+(These will furthermore be required as apart of nltk)
+nltk.download('stopwords')
+nltk.download('wordnet')
+nltk.download('omw-1.4')
