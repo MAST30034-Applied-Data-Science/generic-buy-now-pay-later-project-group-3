@@ -3,7 +3,9 @@ from functools import reduce
 
 import numpy as np
 import pandas as pd
+import sys
 from pyspark.sql import SparkSession, DataFrame
+
 
 def read_tables(sp: SparkSession, file: str, ftype = "p", sample=False):
     """
@@ -17,8 +19,13 @@ def read_tables(sp: SparkSession, file: str, ftype = "p", sample=False):
     returns DataFrame
     """
     # Root directory
-    dir = "../data/tables/"
-    
+    #dir = "../data/tables/"
+
+    if(sys.argv[1] != "--path"):
+        print >> sys.stderr, "Incorrect format."
+        sys.exit(1)
+    dir = sys.argv[2] + "/" #folder path should be at position 2.
+
     # Transaction folders
     if file == "transactions":
         # Read all transactions together
@@ -55,7 +62,7 @@ def read_curated(sp:SparkSession, fname: str):
     fname : Name of file to be read
     """
     # Root directory
-    dir = "../data/curated/" + fname
+    dir = sys.argv[4] + "/curated/" + fname
     return sp.read.option("inferSchema", True).parquet(dir)
 
 def read_processed(sp: SparkSession, fname: str):
@@ -66,12 +73,12 @@ def read_processed(sp: SparkSession, fname: str):
     fname : Name of file to be read
     """
     # Root directory
-    dir = "../data/processed/" + fname
+    dir = sys.argv[4] + "/processed/" + fname
     return sp.read.option("inferSchema", True).parquet(dir)
 
 def write_data(data: DataFrame, folder: str, fname: str):
     """
-    Function to write spark data into the specified folder
+    Function to write spark data into the output folder specified by command line input
     """
     dir = safety_check(folder) + "/" + fname
     data.write.parquet(dir, mode="overwrite")
@@ -83,7 +90,11 @@ def safety_check(parent_dir: str, dir_name = None):
     Function to perform checks of directory folders
     """
     # Safety check
-    output_dir = "../data/" + parent_dir
+    if (sys.argv[3] != "--output"):
+        print >> sys.stderr, "Incorrect format."
+        sys.exit(1)
+    output_dir = sys.argv[4] + "/" + parent_dir
+    
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 

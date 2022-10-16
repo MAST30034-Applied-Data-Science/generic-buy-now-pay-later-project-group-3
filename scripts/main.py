@@ -11,10 +11,10 @@ def BNPL_ranker():
     # Download
     # _download()
 
-    # c = Clean()
-    # _clean()
+    #c = Clean()
+    _clean()
 
-    # p = Process()
+    #p = Process()
     _process()
 
 def _download():
