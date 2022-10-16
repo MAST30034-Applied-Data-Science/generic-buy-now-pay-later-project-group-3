@@ -1,9 +1,16 @@
+from distutils.command.clean import clean
 import os
 from functools import reduce
 
 import numpy as np
 import pandas as pd
+import sys
 from pyspark.sql import SparkSession, DataFrame
+
+ALL = 0
+DOWNLOAD = 1
+CLEAN = 2
+PROCESS = 3
 
 def read_tables(sp: SparkSession, file: str, ftype = "p", sample=False):
     """
@@ -17,8 +24,13 @@ def read_tables(sp: SparkSession, file: str, ftype = "p", sample=False):
     returns DataFrame
     """
     # Root directory
-    dir = "../data/tables/"
-    
+    #dir = "../data/tables/"
+
+    if(sys.argv[1] != "--path"):
+        print >> sys.stderr, "Incorrect format."
+        sys.exit(1)
+    dir = sys.argv[2] + "/"     #folder path should be at position 2.
+
     # Transaction folders
     if file == "transactions":
         # Read all transactions together
@@ -39,7 +51,7 @@ def read_tables(sp: SparkSession, file: str, ftype = "p", sample=False):
 
     # Special file
     elif file == "tbl_consumer":
-        return sp.read.option("inferSchema", True).option("header", True).option("delimiter", "|").csv("../data/tables/tbl_consumer.csv")
+        return sp.read.option("inferSchema", True).option("header", True).option("delimiter", "|").csv(dir + file + ".csv")
 
     # Parquet files
     if ftype == "p":
@@ -55,7 +67,7 @@ def read_curated(sp:SparkSession, fname: str):
     fname : Name of file to be read
     """
     # Root directory
-    dir = "../data/curated/" + fname
+    dir = sys.argv[4] + "/curated/" + fname
     return sp.read.option("inferSchema", True).parquet(dir)
 
 def read_processed(sp: SparkSession, fname: str):
@@ -66,12 +78,12 @@ def read_processed(sp: SparkSession, fname: str):
     fname : Name of file to be read
     """
     # Root directory
-    dir = "../data/processed/" + fname
+    dir = sys.argv[4] + "/processed/" + fname
     return sp.read.option("inferSchema", True).parquet(dir)
 
 def write_data(data: DataFrame, folder: str, fname: str):
     """
-    Function to write spark data into the specified folder
+    Function to write spark data into the output folder specified by command line input
     """
     dir = safety_check(folder) + "/" + fname
     data.write.parquet(dir, mode="overwrite")
@@ -83,7 +95,11 @@ def safety_check(parent_dir: str, dir_name = None):
     Function to perform checks of directory folders
     """
     # Safety check
-    output_dir = "../data/" + parent_dir
+    if (sys.argv[3] != "--output"):
+        print >> sys.stderr, "Incorrect format."
+        sys.exit(1)
+    output_dir = sys.argv[4] + "/" + parent_dir
+    
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -97,7 +113,21 @@ def safety_check(parent_dir: str, dir_name = None):
     return output_dir
 
 
+def read_command_line():
+    """
+    Function to read and parse the flag from command line that specifies which scripts to run.
+    """
+    if len(sys.argv) == 5:
+        return ALL
+    if sys.argv[5] == "-d":
+        return DOWNLOAD
+    elif sys.argv[5] == "-c":
+        return CLEAN
+    elif sys.argv[5] == "-p":
+        return PROCESS
+    else:
+        print >> sys.stderr, "Incorrect flag. Please select one of the options provided in the README.md file"
+        sys.exit(1)
+
+
 ##########################
-
-
-

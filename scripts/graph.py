@@ -1,12 +1,13 @@
+import os, sys
 import utils as u
 
 from pyspark.sql import SparkSession
 from pyspark.sql.types import FloatType
 from pyspark.sql.functions import col, round, monotonically_increasing_id
 
-class Clean():
+class Graph():
     """
-    Class dedicated for cleaning internal and external datasets
+    Class dedicated for creating visualisations
     """
 
     def __init__(self):
@@ -17,8 +18,7 @@ class Clean():
         )
         self.transactions = u.read_tables(self.sp, "transactions")
         self.c_fraud = u.read_tables(self.sp, "consumer_fraud_probability" , "c")
-        self.m_fraud = u.read_tables(self.sp, "merchant_fraud_probability", "c")
-        
+        self.m_fraud = u.read_tables(self.sp, "consumer_fraud_probability", "c")
 
     def __del__(self):
         self.sp.stop
