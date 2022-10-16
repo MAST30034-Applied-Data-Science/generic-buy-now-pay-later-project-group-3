@@ -1,66 +1,54 @@
 # Generic Buy Now, Pay Later Project
 
 ### Introduction
-
 ---
+A generic Buy Now, Pay Later (BNPL) firm has begun offering a new “Pay in 5 Installments” feature. Merchants are looking to boost their customer base by forming a partnership with this firm and in return, the BNPL firm gets a small percentage of revenue (take rate) to cover operating costs. The BNPL firm is looking for the top 100 merchants to onboard.
 
-A generic Buy Now, Pay Later (BNPL) firm has begun offering a new “Pay in 5 Installments” feature. Merchants (also known as retailers) are looking to boost their customer base by forming a partnership with this firm and in return, the BNPL firm gets a small percentage of revenue (take rate) to cover operating costs. Since this is a great Win-Win opportunity, there are X number of merchants who wish to partner up! However, the BNPL firm can only onboard at most 100 < X number of merchants every year due to limited resources. 
-
-With this as the motivation/task, we have been able to formulate a Ranking Model, to determine score a Merchant base on their Finantial capabilities, Customer Base, and Sustainability in the Market. 
-
+With this as the motivation, we have been able to formulate a Ranking Model, to score a Merchant based on their Financial capabilities, Customer Base, Fraud risk and Sustainability in the Market.
 
 ### How to use
-
 ---
-
 #### Pipeline
-
 To ensure all required libraries are installed, run (preferably in Python 3.9)
-
 `pip install -r requirements.txt`
 
-The following order is how the scripts are executed
+To run the pipeline
+`python3 main.py --path "some/path/data" --output "some/output/dir" -option`
+- \- -path: input folder path where all the tables (customer, merchant, transactions) are stored
+- \- -output: folder where the processed/cleaned tables are to be stored. Should have the same parent directory as '- -path', see example below
+- \-option (optional): 
+        -d: _download_ files only
+        -c: _clean_ files only
+        -p: _process_ files only
+        none: _download, clean and process_
+
+E.g.,
+`python3 main.py --path "/home/generic-buy-now-pay-later-project-group-3/data/tables" --output "/home/generic-buy-now-pay-later-project-group-3/data" -p`
+
+
+The following scripts get executed in order:
 ```
 scripts
 ├── Main.py 
 ├── Download.py
 ├── Clean.py
 ├── Process.py
+```
 
+To run the fraud detection and Ranking models, execute the following notebooks in order:
+```
 notebooks
 ├── Model.ipynb
 ├── Model_results.ipynb
-├── Ranking.ipynb
-└── Ranking_results.ipynb
+├── Ranking_System_P1.ipynb
+└── Ranking_System_P2_Functions.ipynb
 ```
+Note: 
+- Notebooks with the prefix 'DO_NOT_RUN' are just helper notebooks used to understand the data and analyse trends, need not be run.
+- In all the above notebooks, user needs to specify the path variable in the top cell. A note is included, just need to set the 'dir' variable to point to the data folder.
 
-Note that main.py calls download, clean, and process scripts automatically if no argument provided. To reproduce the results, run `main.py` with the specified path to the data folder
-
-
-
-#### Arguments
-
----
-
-Specify arguments here
-
-
-
-#### More
-
----
-
-To utilise the Model, all that is required is for main.py to be run (found in the scripts folder), which will activate a ETL script, putting in place all steps in Ranking each Merchant. 
-
-Furthermore, the Notebook 'Summary.ipynb' (found in notebooks), has been formulated to collate the interesting findings derived along the way of achieving the overall goal. Please have a look to better understand the infuences of the Ranking Process.
-
-
-#### Key objective files
-
----
-
-The objective of the project, to rank the top 100 merchants, and find the top 10 ranked merchants by sector, has been saved as paquet files under the names Top_100_Merchants and Top_10_by_Segment respectively, which are found in '../data/curated/'. These can be acessed after sucessfully running the main.py script, and include a list of 'high quality' merchants to target in introducing the BNPL scheme to, where the lower Merchant_Score indicated a better merchant. The full Merchant Rankings can be found in the same folder under the name 'Merchant Rankings'.
-
+#### Visualisations and graphs
+The graphs for trends and model evaluations are included in the *Model_results.ipynb* and *Ranking_System_P2_Functions.ipynb* notebooks.
 
 #### Contributors
 
