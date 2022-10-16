@@ -13,11 +13,42 @@ With this as the motivation/task, we have been able to formulate a Ranking Model
 
 ---
 
-#### Download required files
+#### Pipeline
 
 To ensure all required libraries are installed, run (preferably in Python 3.9)
 
 `pip install -r requirements.txt`
+
+The following order is how the scripts are executed
+```
+scripts
+├── Main.py 
+├── Download.py
+├── Clean.py
+├── Process.py
+
+notebooks
+├── Model.ipynb
+├── Model_results.ipynb
+├── Ranking.ipynb
+└── Ranking_results.ipynb
+```
+
+Note that main.py calls download, clean, and process scripts automatically if no argument provided. To reproduce the results, run `main.py` with the specified path to the data folder
+
+
+
+#### Arguments
+
+---
+
+Specify arguments here
+
+
+
+#### More
+
+---
 
 To utilise the Model, all that is required is for main.py to be run (found in the scripts folder), which will activate a ETL script, putting in place all steps in Ranking each Merchant. 
 

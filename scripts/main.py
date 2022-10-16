@@ -18,26 +18,20 @@ def BNPL_ranker():
     
     if flag == DOWNLOAD:
         _download()
-        print("Downloading task finished!")
         return
     
     elif flag == CLEAN:
         _clean()
-        print("Cleaning task finished!")
         return
 
     elif flag == PROCESS:
         _process()
-        print("Processing task finished!")
         return
     
     elif flag == ALL:
         _download()
-        print("Downloading task finished!")
         _clean()
-        print("Cleaning task finished!")
         _process()
-        print("Processing task finished!")
 
 
 def _download():
