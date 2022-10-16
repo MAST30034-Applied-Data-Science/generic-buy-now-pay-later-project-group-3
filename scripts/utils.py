@@ -7,6 +7,10 @@ import pandas as pd
 import sys
 from pyspark.sql import SparkSession, DataFrame
 
+ALL = 0
+DOWNLOAD = 1
+CLEAN = 2
+PROCESS = 3
 
 def read_tables(sp: SparkSession, file: str, ftype = "p", sample=False):
     """
@@ -47,7 +51,7 @@ def read_tables(sp: SparkSession, file: str, ftype = "p", sample=False):
 
     # Special file
     elif file == "tbl_consumer":
-        return sp.read.option("inferSchema", True).option("header", True).option("delimiter", "|").csv("../data/tables/tbl_consumer.csv")
+        return sp.read.option("inferSchema", True).option("header", True).option("delimiter", "|").csv(dir + file + ".csv")
 
     # Parquet files
     if ftype == "p":
@@ -107,16 +111,23 @@ def safety_check(parent_dir: str, dir_name = None):
 
         return target_dir
     return output_dir
+
+
 def read_command_line():
-    if len(sys.argv) == 4 or sys.argv[5] == "-p":
-        return "process"
-    elif sys.argv[5] == "-d":
-        return "download only"
+    """
+    Function to read and parse the flag from command line that specifies which scripts to run.
+    """
+    if len(sys.argv) == 5:
+        return ALL
+    if sys.argv[5] == "-d":
+        return DOWNLOAD
     elif sys.argv[5] == "-c":
-        return "clean only"
+        return CLEAN
+    elif sys.argv[5] == "-p":
+        return PROCESS
+    else:
+        print >> sys.stderr, "Incorrect flag. Please select one of the options provided in the README.md file"
+        sys.exit(1)
 
 
 ##########################
-
-
-

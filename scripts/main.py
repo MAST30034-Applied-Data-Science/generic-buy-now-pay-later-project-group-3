@@ -1,27 +1,44 @@
 import utils as u
+import sys
 
 from download import Download
 from clean import Clean
 from process import Process
 
+ALL = 0
+DOWNLOAD = 1
+CLEAN = 2
+PROCESS = 3
+
 def BNPL_ranker():
     """
     Main funtion that calls and runs all scripts. Please view terminal for output on progress.
     """
-    # Download
-    # _download()
-    if u.read_command_line() == "download only":
-        print("Downloading only task finished")
-        return
-    #c = Clean()
+    flag = u.read_command_line()
     
-    _clean()
-    if u.read_command_line() == "clean only":
-        print("Downloading and Cleaning only task finished")
+    if flag == DOWNLOAD:
+        _download()
+        print("Downloading task finished!")
+        return
+    
+    elif flag == CLEAN:
+        _clean()
+        print("Cleaning task finished!")
         return
 
-    #p = Process()
-    _process()
+    elif flag == PROCESS:
+        _process()
+        print("Processing task finished!")
+        return
+    
+    elif flag == ALL:
+        _download()
+        print("Downloading task finished!")
+        _clean()
+        print("Cleaning task finished!")
+        _process()
+        print("Processing task finished!")
+
 
 def _download():
     """

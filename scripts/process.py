@@ -1,4 +1,4 @@
-import os
+import os, sys
 import numpy as np
 import pandas as pd
 from pyspark.sql.types import FloatType, IntegerType
@@ -72,7 +72,8 @@ class Process():
         """
         Merge holiday data with transactions
         """
-        holiday = self.sp.read.option("inferSchema", True).parquet("../data/tables/holiday")
+        dir = sys.argv[2] + '/'
+        holiday = self.sp.read.option("inferSchema", True).parquet(dir + "holiday")
         return self.transactions.join(holiday, holiday.date == self.transactions.order_datetime, how="left").drop("date")
 
     def create_cust_growth_column(self, merchants, transactions):
@@ -136,14 +137,16 @@ class Process():
         """
         Function to use entropy of merchants based on postcode and monthly revenue
         """
-        entropy = self.sp.read.option("inferSchema", True).parquet("../data/tables/entropy")
+        dir = sys.argv[2] + '/'
+        entropy = self.sp.read.option("inferSchema", True).parquet(dir + "entropy")
         return self.merchants.join(entropy, on="merchant_abn")
 
     def merchant_lookup(self):
         """
         Function to join merchant description on lookup table to save space
         """
-        lookup = self.sp.read.option("inferSchema", True).csv("../data/tables/description_lookup.csv")
+        dir = sys.argv[2] + '/'
+        lookup = self.sp.read.option("inferSchema", True).csv(dir + "description_lookup.csv")
         lookup = lookup.withColumnRenamed("_c0", "Description").withColumnRenamed("_c1", "tag_number")
         lookup = lookup.withColumn("tag_number", col("tag_number").cast(IntegerType()))
 
@@ -201,7 +204,8 @@ class Process():
     def postcode_add(self, spark: SparkSession, customer_dataset: DataFrame):
         # load data 
         cust = customer_dataset.toPandas()
-        postcodes = pd.read_csv("../data/tables/australian_postcodes.csv")
+        dir = sys.argv[2] + '/'
+        postcodes = pd.read_csv(dir + "australian_postcodes.csv")
         keep_columns = ['postcode', 'state', 'sa3name', 'sa4name', 'SA3_NAME_2016', 'electoraterating', 'electorate']
         postcodes = postcodes[keep_columns]
         
@@ -228,7 +232,8 @@ class Process():
         postcodes_agg.SA3_NAME_2016.fillna(postcodes_agg.SA3_NAME_2016_mode, inplace=True)
         postcodes_agg.electorate.fillna(postcodes_agg.electorate_mode, inplace=True)
         postcodes_agg = postcodes_agg.drop(['sa3name_mode', 'sa4name_mode', 'electoraterating_mode', 'SA3_NAME_2016_mode', 'electorate_mode'], axis = 1)
-        tax_data = pd.read_csv("../data/tables/tax_income.csv")
+        dir = sys.argv[2] + '/'
+        tax_data = pd.read_csv(dir + "tax_income.csv")
         
         # First remove duplicate columns 
         tax_data = tax_data.T.drop_duplicates().T

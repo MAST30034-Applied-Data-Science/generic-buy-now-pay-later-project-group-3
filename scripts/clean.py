@@ -17,7 +17,7 @@ class Clean():
         )
         self.transactions = u.read_tables(self.sp, "transactions")
         self.c_fraud = u.read_tables(self.sp, "consumer_fraud_probability" , "c")
-        self.m_fraud = u.read_tables(self.sp, "consumer_fraud_probability", "c")
+        self.m_fraud = u.read_tables(self.sp, "merchant_fraud_probability", "c")
         
 
     def __del__(self):
