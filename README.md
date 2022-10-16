@@ -7,6 +7,9 @@ customer base by forming a partnership with this firm and in return, the BNPL fi
 
 With this as the modivation/task, we have been able to formulate a Ranking Model, to determine score a Merchant base on their Finantial capabilities, Customer Base, and Sustainability in the Market. 
 
+
+
+
 How to use
 ______________________________________
 
@@ -15,6 +18,9 @@ Firstly, before running the main.py in the scripts section, please ensure that a
 To utilise the Model, all that is required is for main.py to be run (found in the scripts folder), which will activate a ETL script, putting in place all steps in Ranking each Merchant. 
 
 Furthermore, the Notebook 'Summary.ipynb' (found in notebooks), has been formulated to collate the interesting findings derived along the way of achieving the overall goal. Please have a look to better understand the infuences of the Ranking Process.
+
+
+
 
 Key objective files
 ______________________________________
