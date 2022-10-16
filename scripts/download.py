@@ -28,6 +28,7 @@ class Download():
         self.download_merchants_tbl_processed()
         self.download_entropy()
         self.download_holidays()
+        self.download_shape_files()
     
     def download_tax(self):
         """
@@ -131,6 +132,17 @@ class Download():
         print("Download holidays complete")
 
 
-    # Function to download description averages
-    # Function to download sector averages
-    # Function to download sector information
+    def download_shape_files(self):
+        """
+        Function to download shape files
+        """
+        source = "https://www.abs.gov.au/statistics/standards/australian-statistical-geography-standard-asgs-edition-3/jul2021-jun2026/access-and-downloads/digital-boundary-files/SA2_2021_AUST_SHP_GDA2020.zip"
+
+        file_location = u.safety_check("tables") + "geo_data.zip"
+        urlretrieve(source, file_location)
+
+        with ZipFile(file_location, 'r') as f:
+            f.extractall(u.safety_check("tables/geo_data"))
+            os.remove(file_location)
+
+        print("Download shape files complete")
