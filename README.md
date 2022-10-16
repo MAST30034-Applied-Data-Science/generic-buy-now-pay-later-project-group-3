@@ -36,5 +36,5 @@ The objective of the project, to rank the top 100 merchants, and find the top 10
 - Prathyush P Rao (1102225)
 - Harshita Soni (1138784)
 - Chaitanya Raghuvanshi (117645)
-- James Barro ()
+- James Barro (1082092)
 - Ruitong Wang (1118966)
