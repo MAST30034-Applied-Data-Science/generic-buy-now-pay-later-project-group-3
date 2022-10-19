@@ -12,4 +12,4 @@ geopandas
 ipython
 matplotlib
 seaborn
-Shapely
+shapely
