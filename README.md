@@ -20,7 +20,8 @@ To run the pipeline
         -d: _download_ files only
         -c: _clean_ files only
         -p: _process_ files only
-        none: _download, clean and process_
+        -m: _model_ files only
+        none: _download, clean, process, and model_
 
 E.g.,
 `python3 main.py --path "/home/generic-buy-now-pay-later-project-group-3/data/tables" --output "/home/generic-buy-now-pay-later-project-group-3/data" -p`
