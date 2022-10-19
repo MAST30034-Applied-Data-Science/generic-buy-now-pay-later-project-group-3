@@ -48,6 +48,7 @@ notebooks
 Note: 
 - Notebooks with the prefix 'DO_NOT_RUN' are just helper notebooks used to understand the data and analyse trends, need not be run.
 - In all the above notebooks, user needs to specify the path variable in the top cell. A note is included, just need to set the 'dir' variable to point to the data folder.
+- The analysis summary notebooks are meant for demonstration purposes only and are not to be run.
 
 #### Visualisations and graphs
 The graphs for trends and model evaluations are included in the *Model_results.ipynb* and *Ranking_System_P2_Functions.ipynb* notebooks.
