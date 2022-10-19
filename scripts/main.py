@@ -4,11 +4,14 @@ import sys
 from download import Download
 from clean import Clean
 from process import Process
+from pre_model import PreModel
+from model import Model
 
 ALL = 0
 DOWNLOAD = 1
 CLEAN = 2
 PROCESS = 3
+MODEL = 4
 
 def BNPL_ranker():
     """
@@ -27,11 +30,16 @@ def BNPL_ranker():
     elif flag == PROCESS:
         _process()
         return
+
+    elif flag == MODEL:
+        _model()
+        return
     
     elif flag == ALL:
         _download()
         _clean()
         _process()
+        _model()
 
 
 def _download():
@@ -57,5 +65,17 @@ def _process():
     p = Process()
     p.transform()
     del p
+
+def _model():
+    """
+    Function to call all model based code
+    """
+    pre = PreModel()
+    pre.run_model()
+    del pre
+
+    m = Model()
+    m.run_model()
+    del m
 
 BNPL_ranker()
