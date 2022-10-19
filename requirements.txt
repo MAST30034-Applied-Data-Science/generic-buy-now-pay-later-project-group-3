@@ -1,0 +1,15 @@
+numpy
+pandas
+wheel
+ipykernel
+pyspark
+fastparquet
+scipy
+nltk
+Fiona
+folium
+geopandas
+ipython
+matplotlib
+seaborn
+Shapely

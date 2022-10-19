@@ -131,6 +131,40 @@ dmypy.json
 # data
 data/curated/
 data/raw/
+data/processed/
+data/tables.zip
+
+# Model data
+data/models/train_raw
+data/models/test_raw
+data/models/val_raw
+data/models/X
+data/models/category_transformer
+
+models/classifier
+models/classifier/data
+models/classifier/metadata
+
+# Final vectors
+models/train_vector
+models/val_vector
+models/test_vector
+
+# Processed data
+models/train_raw
+models/test_raw
+models/val_raw
+
+# MLP Classifier
+models/full_raw
+
+# RF Classifier
+# models/random_forest_output_full
+
+# plots
+plots/general_sa2_visuals.html
+plots/foliumChoroplethMap.html
+plots/fraud_results.html
 
 # OSX .DS_Store file
 .DS_Store

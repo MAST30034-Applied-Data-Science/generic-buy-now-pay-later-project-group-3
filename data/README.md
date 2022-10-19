@@ -31,3 +31,8 @@ The data will be uploaded directly to the `tables` directory.
 - Due to a difference between the internal system and a poor design choice (for some reason), the transaction tables use a surrogate key for each new `user_id`.
 - However, the Consumer table has a unique ID (some are missing on purpose) field which will require some form of mapping between `consumer_id` to `user_id`.
 - An additional mapping table has been provided to join the two datasets together.
+
+## How to run the ETL script:
+python3 main.py --path "some/path/data" --output "some/output/dir" -option eg: python3 main.py --path "/home/loky/generic-buy-now-pay-later-project-group-3/data/tables" --output "/home/loky/generic-buy-now-pay-later-project-group-3/data"
+
+-option: -d for download only, -c for clean only, -p for whole process. if no option is specified, then do the whole process
