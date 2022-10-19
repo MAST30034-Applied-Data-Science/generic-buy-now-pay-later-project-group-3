@@ -20,3 +20,11 @@ The process py script takes the cleaned data to process and transform such that 
 ### `utils.py`
 
 The utils py script contains several helper functions that are accessed by all files
+
+### `pre_model.py`
+
+The pre model script contains several functions that help ready the day for the model
+
+### `model.py`
+
+The model script runs the Random Forest algorithm against all transactions
