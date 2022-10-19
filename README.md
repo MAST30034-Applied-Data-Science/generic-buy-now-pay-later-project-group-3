@@ -34,12 +34,13 @@ scripts
 ├── Download.py
 ├── Clean.py
 ├── Process.py
+├── Pre_model.py
+├── Model.py
 ```
 
 To run the fraud detection and Ranking models, execute the following notebooks in order:
 ```
 notebooks
-├── Model.ipynb
 ├── Model_results.ipynb
 ├── Ranking_System_P1.ipynb
 └── Ranking_System_P2_Functions.ipynb
