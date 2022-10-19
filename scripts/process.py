@@ -24,6 +24,7 @@ class Process():
         self.transactions = u.read_curated(self.sp, "transactions")
         self.merchants = u.read_tables(self.sp, "merchants_tbl_processed", "c")
         self.customers = u.read_curated(self.sp, "consumer_details")
+        self.dir = sys.argv[2] + '/'
 
     def __del__(self):
         self.sp.stop
@@ -33,17 +34,19 @@ class Process():
         """
         Main function to call all the processing steps and methods
         """
+        output_folder = "processed"
+
         # MERCHANTS
         self.merchant_transform()
-        u.write_data(self.merchants, "processed", "merchants")
+        u.write_data(self.merchants, output_folder, "merchants")
 
         # TRANSACTIONS
         self.transaction_transform()
-        u.write_data(self.transactions, "processed", "transactions")
+        u.write_data(self.transactions, output_folder, "transactions")
 
         # CUSTOMERS
         self.customer_transform()
-        u.write_data(self.customers, "processed", "customers")
+        u.write_data(self.customers, output_folder, "customers")
 
     def merchant_transform(self):
         """
@@ -72,7 +75,6 @@ class Process():
         """
         Merge holiday data with transactions
         """
-        dir = sys.argv[2] + '/'
         holiday = u.read_tables(self.sp, "holiday")
         return self.transactions.join(holiday, holiday.date == self.transactions.order_datetime, how="left").drop("date")
 
@@ -144,8 +146,7 @@ class Process():
         """
         Function to join merchant description on lookup table to save space
         """
-        dir = sys.argv[2] + '/'
-        lookup = self.sp.read.option("inferSchema", True).csv(dir + "description_lookup.csv")
+        lookup = u.read_tables(self.sp, "c", "description_lookup")
         lookup = lookup.withColumnRenamed("_c0", "Description").withColumnRenamed("_c1", "tag_number")
         lookup = lookup.withColumn("tag_number", col("tag_number").cast(IntegerType()))
 
@@ -203,8 +204,7 @@ class Process():
     def postcode_add(self, spark: SparkSession, customer_dataset: DataFrame):
         # load data 
         cust = customer_dataset.toPandas()
-        dir = sys.argv[2] + '/'
-        postcodes = pd.read_csv(dir + "australian_postcodes.csv")
+        postcodes = pd.read_csv(self.dir + "australian_postcodes.csv")
         keep_columns = ['postcode', 'state', 'sa3name', 'sa4name', 'SA3_NAME_2016', 'electoraterating', 'electorate']
         postcodes = postcodes[keep_columns]
         
@@ -231,8 +231,7 @@ class Process():
         postcodes_agg.SA3_NAME_2016.fillna(postcodes_agg.SA3_NAME_2016_mode, inplace=True)
         postcodes_agg.electorate.fillna(postcodes_agg.electorate_mode, inplace=True)
         postcodes_agg = postcodes_agg.drop(['sa3name_mode', 'sa4name_mode', 'electoraterating_mode', 'SA3_NAME_2016_mode', 'electorate_mode'], axis = 1)
-        dir = sys.argv[2] + '/'
-        tax_data = pd.read_csv(dir + "tax_income.csv")
+        tax_data = pd.read_csv(self.dir + "tax_income.csv")
         
         # First remove duplicate columns 
         tax_data = tax_data.T.drop_duplicates().T

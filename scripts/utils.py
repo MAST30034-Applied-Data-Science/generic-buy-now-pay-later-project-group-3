@@ -11,6 +11,7 @@ ALL = 0
 DOWNLOAD = 1
 CLEAN = 2
 PROCESS = 3
+MODEL = 4
 
 def read_tables(sp: SparkSession, file: str, ftype = "p", sample=False):
     """
@@ -72,13 +73,24 @@ def read_curated(sp:SparkSession, fname: str):
 
 def read_processed(sp: SparkSession, fname: str):
     """
-    Function to read data from the curated folder
+    Function to read data from the processed folder
 
     sp : Current sparkSession
     fname : Name of file to be read
     """
     # Root directory
     dir = sys.argv[4] + "/processed/" + fname
+    return sp.read.option("inferSchema", True).parquet(dir)
+
+def read_models(sp: SparkSession, fname: str):
+    """
+    Function to read data from the models folder
+
+    sp : Current sparkSession
+    fname : Name of file to be read
+    """
+    # Root directory
+    dir = sys.argv[4] + "/models/" + fname
     return sp.read.option("inferSchema", True).parquet(dir)
 
 def write_data(data: DataFrame, folder: str, fname: str):
@@ -125,6 +137,8 @@ def read_command_line():
         return CLEAN
     elif sys.argv[5] == "-p":
         return PROCESS
+    elif sys.argv[5] == "-m":
+        return MODEL
     else:
         print >> sys.stderr, "Incorrect flag. Please select one of the options provided in the README.md file"
         sys.exit(1)

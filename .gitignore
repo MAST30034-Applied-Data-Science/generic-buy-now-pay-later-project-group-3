@@ -135,6 +135,12 @@ data/processed/
 data/tables.zip
 
 # Model data
+data/models/train_raw
+data/models/test_raw
+data/models/val_raw
+data/models/X
+data/models/category_transformer
+
 models/classifier
 models/classifier/data
 models/classifier/metadata
